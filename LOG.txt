@@ -1,0 +1,32 @@
+Logs for your project will appear below. Press Ctrl+C to exit.
+λ Bundled 1222ms node_modules\expo-router\node\render.js (973 modules)    
+Web node_modules\expo-router\entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 99.9% (1324/1324)
+[expo-notifications] Listening to push token changes is not yet fully supported on web. Adding a listener will have no effect.
+λ  WARN  props.pointerEvents is deprecated. Use style.pointerEvents 
+  console.warn (D:\Documents\Studies\SY_2025-2026\SEM2\ITMSD4\MyApp\MyApp\node_modules\expo\node_modules\@expo\cli\src\start\server\serverLogLikeMetro.ts:161:21)
+  warnOnce (D:\Documents\Studies\SY_2025-2026\SEM2\ITMSD4\MyApp\MyApp\node_modules\react-native-web\dist\modules\warnOnce\index.js:24:13)
+  createDOMProps (D:\Documents\Studies\SY_2025-2026\SEM2\ITMSD4\MyApp\MyApp\node_modules\react-native-web\dist\modules\createDOMProps\index.js:805:13)
+  createElement (D:\Documents\Studies\SY_2025-2026\SEM2\ITMSD4\MyApp\MyApp\node_modules\react-native-web\dist\exports\createElement\index.js:23:32)
+  Component (D:\Documents\Studies\SY_2025-2026\SEM2\ITMSD4\MyApp\MyApp\node_modules\react-native-web\dist\exports\View\index.js:111:23)
+  Object.callComponentInDEV [as react-stack-bottom-frame] (D:\Documents\Studies\SY_2025-2026\SEM2\ITMSD4\MyApp\MyApp\node_modules\react-dom\cjs\react-dom-server-legacy.node.development.js:8970:18)
+  renderWithHooks (D:\Documents\Studies\SY_2025-2026\SEM2\ITMSD4\MyApp\MyApp\node_modules\react-dom\cjs\react-dom-server-legacy.node.development.js:4699:19)
+  run (D:\Documents\Studies\SY_2025-2026\SEM2\ITMSD4\MyApp\MyApp\node_modules\react-dom\cjs\react-dom-server-legacy.node.development.js:5539:39)
+  retryNode (D:\Documents\Studies\SY_2025-2026\SEM2\ITMSD4\MyApp\MyApp\node_modules\react-dom\cjs\react-dom-server-legacy.node.development.js:5899:31)
+  renderNodeDestructive (D:\Documents\Studies\SY_2025-2026\SEM2\ITMSD4\MyApp\MyApp\node_modules\react-dom\cjs\react-dom-server-legacy.node.development.js:5849:11)        
+(node:4888) Warning: `--localstorage-file` was provided without a valid path
+(Use `node --trace-warnings ...` to show where the warning was created)
+D:\Documents\Studies\SY_2025-2026\SEM2\ITMSD4\MyApp\MyApp\node_modules\expo\node_modules\@expo\cli\build\src\utils\errors.js:130
+    throw error;
+    ^
+
+TypeError: localStorage.getItem is not a function
+    at Object.getRegistrationInfoAsync (D:\Documents\Studies\SY_2025-2026\SEM2\ITMSD4\MyApp\MyApp\node_modules\expo-notifications\build\ServerRegistrationModule.web.js:28:29)
+    at factory (D:\Documents\Studies\SY_2025-2026\SEM2\ITMSD4\MyApp\MyApp\node_modules\expo-notifications\build\DevicePushTokenAutoRegistration.fx.js:84:30)
+    at loadModuleImplementation (D:\Documents\Studies\SY_2025-2026\SEM2\ITMSD4\MyApp\MyApp\node_modules\expo\node_modules\@expo\cli\build\metro-require\require.js:248:36)    at guardedLoadModule (D:\Documents\Studies\SY_2025-2026\SEM2\ITMSD4\MyApp\MyApp\node_modules\expo\node_modules\@expo\cli\build\metro-require\require.js:163:16)       
+    at require (D:\Documents\Studies\SY_2025-2026\SEM2\ITMSD4\MyApp\MyApp\node_modules\expo\node_modules\@expo\cli\build\metro-require\require.js:74:75)
+    at factory (D:\Documents\Studies\SY_2025-2026\SEM2\ITMSD4\MyApp\MyApp\node_modules\expo-notifications\build\getExpoPushTokenAsync.js:4:1)
+    at loadModuleImplementation (D:\Documents\Studies\SY_2025-2026\SEM2\ITMSD4\MyApp\MyApp\node_modules\expo\node_modules\@expo\cli\build\metro-require\require.js:248:36)    at guardedLoadModule (D:\Documents\Studies\SY_2025-2026\SEM2\ITMSD4\MyApp\MyApp\node_modules\expo\node_modules\@expo\cli\build\metro-require\require.js:163:16)       
+    at require (D:\Documents\Studies\SY_2025-2026\SEM2\ITMSD4\MyApp\MyApp\node_modules\expo\node_modules\@expo\cli\build\metro-require\require.js:74:75)
+    at D:\Documents\Studies\SY_2025-2026\SEM2\ITMSD4\MyApp\MyApp\node_modules\expo-notifications\build\index.js:12:1
+
+Node.js v25.1.0

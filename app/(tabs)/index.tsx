@@ -1,6 +1,6 @@
-import app from '@/firebaseConfig';
+import app, { auth } from '../../firebaseConfig';
 import { Image } from 'expo-image';
-import { getAuth, signOut } from 'firebase/auth';
+import { signOut } from 'firebase/auth';
 import { Alert, Platform, StyleSheet, TouchableOpacity } from 'react-native';
 
 import { HelloWave } from '@/components/hello-wave';
@@ -8,8 +8,6 @@ import ParallaxScrollView from '@/components/parallax-scroll-view';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Link } from 'expo-router';
-
-const auth = getAuth(app);
 
 export default function HomeScreen() {
   const handleSignOut = async () => {

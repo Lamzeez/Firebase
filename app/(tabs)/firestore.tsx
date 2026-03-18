@@ -1,4 +1,4 @@
-import app from "@/firebaseConfig";
+import app, { auth } from "../../firebaseConfig";
 import {
     addDoc,
     collection,
@@ -10,11 +10,13 @@ import {
     query,
     serverTimestamp,
     updateDoc,
+    where,
 } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import {
     Alert,
     FlatList,
+    Platform,
     StyleSheet,
     TextInput,
     TouchableOpacity,
@@ -38,10 +40,18 @@ export default function FirestoreScreen() {
   const [body, setBody] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
  
-  // READ — Fetch all notes
+  // READ — Fetch all notes for the current user
   const fetchNotes = async () => {
+    const user = auth.currentUser;
+    if (!user) return;
+
     try {
-      const q = query(collection(db, "notes"), orderBy("createdAt", "desc"));
+      // Create a query that filters by userId and sorts by creation time
+      const q = query(
+        collection(db, "notes"),
+        where("userId", "==", user.uid),
+        orderBy("createdAt", "desc")
+      );
       const snapshot = await getDocs(q);
       const items: Note[] = snapshot.docs.map((doc) => ({
         id: doc.id,
@@ -50,6 +60,8 @@ export default function FirestoreScreen() {
       }));
       setNotes(items);
     } catch (error: any) {
+      console.error("Error fetching notes:", error);
+      // Note: If you see an error about needing an index, Firestore will provide a link in the browser console.
       Alert.alert("Error fetching notes", error.message);
     }
   };
@@ -58,14 +70,21 @@ export default function FirestoreScreen() {
     fetchNotes();
   }, []);
  
-  // CREATE — Add a new note
+  // CREATE — Add a new note with the current user's ID
   const handleAdd = async () => {
+    const user = auth.currentUser;
+    if (!user) {
+      Alert.alert("Error", "You must be logged in to add notes");
+      return;
+    }
+
     if (!title.trim()) {
       Alert.alert("Error", "Title is required");
       return;
     }
     try {
       await addDoc(collection(db, "notes"), {
+        userId: user.uid, // Save the owner's ID
         title: title.trim(),
         body: body.trim(),
         createdAt: serverTimestamp(),
@@ -97,21 +116,34 @@ export default function FirestoreScreen() {
  
   // DELETE — Remove a note
   const handleDelete = (id: string) => {
-    Alert.alert("Delete Note", "Are you sure?", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Delete",
-        style: "destructive",
-        onPress: async () => {
-          try {
-            await deleteDoc(doc(db, "notes", id));
-            fetchNotes();
-          } catch (error: any) {
-            Alert.alert("Error deleting note", error.message);
-          }
+    if (Platform.OS === "web") {
+      const confirmed = window.confirm("Are you sure you want to delete this note?");
+      if (confirmed) {
+        performDelete(id);
+      }
+    } else {
+      Alert.alert("Delete Note", "Are you sure?", [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: () => performDelete(id),
         },
-      },
-    ]);
+      ]);
+    }
+  };
+
+  const performDelete = async (id: string) => {
+    try {
+      await deleteDoc(doc(db, "notes", id));
+      fetchNotes();
+    } catch (error: any) {
+      if (Platform.OS === "web") {
+        alert("Error deleting note: " + error.message);
+      } else {
+        Alert.alert("Error deleting note", error.message);
+      }
+    }
   };
  
   // Tap a note to edit it
@@ -173,23 +205,25 @@ export default function FirestoreScreen() {
         keyExtractor={(item) => item.id}
         style={styles.list}
         renderItem={({ item }) => (
-          <TouchableOpacity
-            style={styles.noteCard}
-            onPress={() => startEdit(item)}
-          >
-            <View style={styles.noteContent}>
+          <View style={styles.noteCard}>
+            <TouchableOpacity
+              style={styles.noteContent}
+              onPress={() => startEdit(item)}
+            >
               <ThemedText type="defaultSemiBold">{item.title}</ThemedText>
               {item.body ? (
                 <ThemedText style={styles.noteBody}>{item.body}</ThemedText>
               ) : null}
-            </View>
+            </TouchableOpacity>
+            
             <TouchableOpacity
               style={styles.deleteButton}
               onPress={() => handleDelete(item.id)}
+              activeOpacity={0.7}
             >
               <ThemedText style={styles.deleteText}>X</ThemedText>
             </TouchableOpacity>
-          </TouchableOpacity>
+          </View>
         )}
         ListEmptyComponent={
           <ThemedText style={styles.emptyText}>

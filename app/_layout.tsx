@@ -1,14 +1,32 @@
-import app from '@/firebaseConfig';
+import app, { auth } from '../firebaseConfig';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { getAuth, onAuthStateChanged, User } from 'firebase/auth';
-import { useEffect, useState } from 'react';
+import { onAuthStateChanged, User } from 'firebase/auth';
+import { getFirestore, doc, setDoc, serverTimestamp, updateDoc } from 'firebase/firestore';
+import { useEffect, useState, useRef } from 'react';
+import { Platform } from 'react-native';
+import * as Notifications from 'expo-notifications';
+import * as Device from 'expo-device';
+import Constants from 'expo-constants';
 import 'react-native-reanimated';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
-const auth = getAuth(app);
+const db = getFirestore(app);
+
+// Initialize notification handler only on native platforms
+if (Platform.OS !== 'web') {
+  Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+      shouldShowAlert: true,
+      shouldPlaySound: true,
+      shouldSetBadge: false,
+      shouldShowBanner: true,
+      shouldShowList: true,
+    }),
+  });
+}
 
 export const unstable_settings = {
   anchor: '(tabs)',
@@ -20,14 +38,108 @@ export default function RootLayout() {
   const [ready, setReady] = useState(false);
   const segments = useSegments();
   const router = useRouter();
+  
+  const [expoPushToken, setExpoPushToken] = useState<string | undefined>('');
+  const [notification, setNotification] = useState<Notifications.Notification | undefined>(
+    undefined
+  );
+  const notificationListener = useRef<any>(null);
+  const responseListener = useRef<any>(null);
 
-  // Listen for auth state changes
+  // Function to register for push notifications and get the token
+  async function registerForPushNotificationsAsync() {
+    if (Platform.OS === 'web') return; // Not supported in web app version
+
+    let token;
+    if (Device.isDevice) {
+      const { status: existingStatus } = await Notifications.getPermissionsAsync();
+      let finalStatus = existingStatus;
+      if (existingStatus !== 'granted') {
+        const { status } = await Notifications.requestPermissionsAsync();
+        finalStatus = status;
+      }
+      if (finalStatus !== 'granted') {
+        alert('Failed to get push token for push notification!');
+        return;
+      }
+      
+      const projectId = Constants.expoConfig?.extra?.eas?.projectId ?? Constants.expoConfig?.slug;
+      if (!projectId) {
+        console.warn("No Project ID found for push tokens");
+        return;
+      }
+
+      token = (await Notifications.getExpoPushTokenAsync({
+        projectId: projectId,
+      })).data;
+      console.log("Push Token:", token);
+    } else {
+      console.log('Must use physical device for Push Notifications');
+    }
+
+    if (Platform.OS === 'android') {
+      Notifications.setNotificationChannelAsync('default', {
+        name: 'default',
+        importance: Notifications.AndroidImportance.MAX,
+        vibrationPattern: [0, 250, 250, 250],
+        lightColor: '#FF231F7C',
+      });
+    }
+
+    return token;
+  }
+
+  // Listen for auth state changes and register notifications
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+    const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
       setUser(firebaseUser);
+      if (firebaseUser) {
+        // Save user to Firestore
+        try {
+          await setDoc(doc(db, 'users', firebaseUser.uid), {
+            uid: firebaseUser.uid,
+            email: firebaseUser.email,
+            lastSeen: serverTimestamp(),
+          }, { merge: true });
+
+          // Register for push notifications (Native Only)
+          if (Platform.OS !== 'web') {
+            const token = await registerForPushNotificationsAsync();
+            if (token) {
+              setExpoPushToken(token);
+              // Save the token to the user's document in Firestore
+              await updateDoc(doc(db, 'users', firebaseUser.uid), {
+                pushToken: token,
+              });
+            }
+          }
+        } catch (error) {
+          console.error("Error updating user Firestore:", error);
+        }
+      }
       setReady(true);
     });
-    return unsubscribe;
+
+    // Notification Listeners (Native Only)
+    if (Platform.OS !== 'web') {
+      notificationListener.current = Notifications.addNotificationReceivedListener(notification => {
+        setNotification(notification);
+      });
+
+      responseListener.current = Notifications.addNotificationResponseReceivedListener(response => {
+        console.log("Notification Response:", response);
+      });
+    }
+
+    return () => {
+      unsubscribeAuth();
+      if (notificationListener.current) {
+        notificationListener.current.remove();
+      }
+      if (responseListener.current) {
+        responseListener.current.remove();
+      }
+    };
   }, []);
 
   // Redirect based on auth state

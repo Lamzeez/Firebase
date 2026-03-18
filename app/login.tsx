@@ -1,8 +1,7 @@
-import app from "@/firebaseConfig";
+import app, { auth } from "../firebaseConfig";
 import { router } from "expo-router";
 import {
   createUserWithEmailAndPassword,
-  getAuth,
   signInWithEmailAndPassword,
 } from "firebase/auth";
 import { useState } from "react";
@@ -17,8 +16,6 @@ import {
 
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
-
-const auth = getAuth(app);
 
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
