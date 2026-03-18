@@ -1,4 +1,4 @@
-import app, { auth } from '../../firebaseConfig';
+import app, { auth } from '@/firebaseConfig';
 import { signOut } from 'firebase/auth';
 import { getFirestore, doc, getDoc, updateDoc, onSnapshot } from 'firebase/firestore';
 import { Alert, StyleSheet, TouchableOpacity, View, Image, ActivityIndicator } from 'react-native';

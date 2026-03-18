@@ -43,4 +43,4 @@ app-example
 /android
 
 
-firebaseConfig.ts
+# firebaseConfig.ts removed from ignore to allow EAS build to see it

@@ -1,9 +1,9 @@
-import app, { auth } from '../firebaseConfig';
+import app, { auth } from '@/firebaseConfig';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { onAuthStateChanged, User } from 'firebase/auth';
-import { getFirestore, doc, setDoc, serverTimestamp, updateDoc } from 'firebase/firestore';
+import { getFirestore, doc, setDoc, serverTimestamp, updateDoc, collection, query, where, onSnapshot, orderBy, limit } from 'firebase/firestore';
 import { useEffect, useState, useRef } from 'react';
 import { Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
@@ -45,6 +45,16 @@ export default function RootLayout() {
   );
   const notificationListener = useRef<any>(null);
   const responseListener = useRef<any>(null);
+  const messageListenerUnsubscribe = useRef<any>(null);
+
+  // Request Web Notification Permission
+  useEffect(() => {
+    if (Platform.OS === 'web' && 'Notification' in window) {
+      if (Notification.permission !== 'granted' && Notification.permission !== 'denied') {
+        Notification.requestPermission();
+      }
+    }
+  }, []);
 
   // Function to register for push notifications and get the token
   async function registerForPushNotificationsAsync() {
@@ -113,8 +123,49 @@ export default function RootLayout() {
               });
             }
           }
+
+          // Listen for new incoming messages globally (Web In-App Notification)
+          const q = query(
+            collection(db, 'messages'),
+            where('receiverId', '==', firebaseUser.uid),
+            orderBy('createdAt', 'desc'),
+            limit(1)
+          );
+          
+          let isInitialLoad = true;
+          messageListenerUnsubscribe.current = onSnapshot(q, (snapshot) => {
+            if (isInitialLoad) {
+              isInitialLoad = false;
+              return;
+            }
+            
+            snapshot.docChanges().forEach((change) => {
+              if (change.type === 'added') {
+                const messageData = change.doc.data();
+                
+                // Show Web Notification
+                if (Platform.OS === 'web' && 'Notification' in window) {
+                  if (Notification.permission === 'granted') {
+                    new Notification("New Message!", {
+                      body: messageData.text,
+                    });
+                  } else {
+                    // Fallback to standard alert if permission wasn't granted
+                    alert(`New Message: ${messageData.text}`);
+                  }
+                }
+              }
+            });
+          });
+
         } catch (error) {
           console.error("Error updating user Firestore:", error);
+        }
+      } else {
+        // Clean up message listener on logout
+        if (messageListenerUnsubscribe.current) {
+          messageListenerUnsubscribe.current();
+          messageListenerUnsubscribe.current = null;
         }
       }
       setReady(true);
@@ -138,6 +189,9 @@ export default function RootLayout() {
       }
       if (responseListener.current) {
         responseListener.current.remove();
+      }
+      if (messageListenerUnsubscribe.current) {
+        messageListenerUnsubscribe.current();
       }
     };
   }, []);

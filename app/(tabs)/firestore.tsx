@@ -1,4 +1,4 @@
-import app, { auth } from "../../firebaseConfig";
+import app, { auth } from "@/firebaseConfig";
 import {
     addDoc,
     collection,

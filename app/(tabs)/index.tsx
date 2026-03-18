@@ -1,4 +1,4 @@
-import app, { auth } from '../../firebaseConfig';
+import app, { auth } from '@/firebaseConfig';
 import { Image } from 'expo-image';
 import { signOut } from 'firebase/auth';
 import { Alert, Platform, StyleSheet, TouchableOpacity } from 'react-native';
